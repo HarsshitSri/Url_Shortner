@@ -139,6 +139,15 @@ All JSON uses the envelope: `success`, `data`, `meta`, `warnings`, `error`.
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Optional GitHub OAuth |
 | `GEMINI_API_KEY` / `SPRING_AI_MODEL_CHAT` | Optional AI (`none` by default) |
+| `SHORTLINK_API_BASE` | Frontend (Vercel): Railway API origin — see `frontend/.env.example` |
+
+## Manual production deploy
+
+Templates and checklist (fill placeholders yourself):
+
+- [`deploy/README.md`](deploy/README.md) — Neon → Railway → Vercel steps
+- [`deploy/railway.env.example`](deploy/railway.env.example) — Railway API variables
+- [`frontend/.env.example`](frontend/.env.example) — Vercel UI variables
 
 ## Data model
 
