@@ -1,5 +1,5 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "rewrites": [],
+  "buildCommand": "sh scripts/write-config.sh",
+  "outputDirectory": "."
 }

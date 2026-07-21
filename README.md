@@ -4,7 +4,7 @@ Resume-grade URL shortener built as a monorepo:
 
 - **Backend:** Java 21, Spring Boot 3.4, Postgres, Flyway, Spring Security + JWT, Spring AI (Gemini)
 - **Frontend:** HTML, CSS, basic JS (`index`, `login`, `register`, OAuth callback)
-- **Deploy targets:** Vercel (UI) · Railway (API) · Neon (database)
+- **Deploy targets:** Vercel (UI) · Railway (API) · Neon (database) · Docker Compose (full stack)
 - **Current release:** **v3.0.0** (auth + ownership + optional OAuth). Tags: `v1.0.0`, `v2.0.0`, `v3.0.0`
 
 ## Features by version
@@ -25,6 +25,42 @@ Resume-grade URL shortener built as a monorepo:
 - Optional Google + GitHub OAuth (Spring OAuth2 → same JWT → `oauth-callback.html`)
 
 ## Quick start (local)
+
+### Option A — Docker Compose (recommended)
+
+From the repo root:
+
+```bash
+docker compose up --build
+```
+
+- UI: `http://localhost:5500`
+- API: `http://localhost:8080`
+- Postgres: host port `5434`
+
+Override host ports if needed: `API_PORT=18080 WEB_PORT=15500 POSTGRES_PORT=5435 docker compose up --build`. When changing `API_PORT`, also set `SHORTLINK_API_BASE` and `APP_BASE_URL` to match (for example `http://localhost:18080`).
+
+Optional env overrides (JWT, OAuth, Gemini, CORS) can be passed via a root `.env` or your shell. The API image is also usable alone on Railway:
+
+```bash
+docker build -t shortlink-api ./backend
+docker run --rm -p 8080:8080 \
+  -e DATABASE_URL=jdbc:postgresql://… \
+  -e DATABASE_USERNAME=… \
+  -e DATABASE_PASSWORD=… \
+  -e JWT_SECRET=… \
+  -e APP_BASE_URL=https://your-api.example \
+  -e CORS_ALLOWED_ORIGINS=https://your-ui.example \
+  shortlink-api
+```
+
+Postgres-only (for local `mvn spring-boot:run`):
+
+```bash
+cd backend && docker compose up -d
+```
+
+### Option B — API + static UI without containers
 
 ```bash
 cd backend && docker compose up -d
