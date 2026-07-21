@@ -7,6 +7,16 @@ Resume-grade URL shortener built as a monorepo:
 - **Deploy targets:** Vercel (UI) · Railway (API) · Neon (database) · Docker Compose (full stack)
 - **Current release:** **v3.0.0** (auth + ownership + optional OAuth). Tags: `v1.0.0`, `v2.0.0`, `v3.0.0`
 
+## Live
+
+| Surface | URL |
+|---------|-----|
+| **UI (Vercel)** | https://url-shortner-1nyvhhqea-harsshit.vercel.app/ |
+| **API (Railway)** | https://urlshortner-production-b193.up.railway.app/ |
+| **Health** | https://urlshortner-production-b193.up.railway.app/actuator/health |
+
+Preview Vercel URLs can change on each deploy; prefer the project’s Production domain in the Vercel dashboard when you promote one.
+
 ## Features by version
 
 ### v1
