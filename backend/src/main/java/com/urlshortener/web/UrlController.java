@@ -61,7 +61,7 @@ public class UrlController {
 
     @GetMapping("/urls/{shortCode}")
     public ApiResponse<ShortUrlResponse> getMetadata(@PathVariable String shortCode) {
-        return ApiResponse.ok(urlService.getByShortCode(shortCode));
+        return ApiResponse.ok(urlService.getOwnedByShortCode(shortCode));
     }
 
     @PatchMapping("/urls/{shortCode}")

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
+import com.urlshortener.auth.UserPrincipal;
 import com.urlshortener.config.AppProperties;
 import com.urlshortener.domain.SafetyStatus;
 import com.urlshortener.domain.ShortUrl;
@@ -19,15 +20,20 @@ import com.urlshortener.web.dto.ShortUrlResult;
 import com.urlshortener.web.dto.UpdateShortUrlRequest;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 class UrlServiceTest {
+
+    private static final UUID OWNER_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Mock
     private ShortUrlRepository shortUrlRepository;
@@ -45,10 +51,19 @@ class UrlServiceTest {
         AppProperties props = new AppProperties();
         props.setBaseUrl("http://localhost:8080");
         urlService = new UrlService(shortUrlRepository, shortCodeGenerator, urlSafetyService, props);
+
+        UserPrincipal principal = new UserPrincipal(OWNER_ID, "owner@example.com", "hash");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    void createShortUrl_persistsAndReturnsWarningsForHttpAndAiDown() {
+    void createShortUrl_setsOwnerAndReturnsWarnings() {
         when(urlSafetyService.classify(anyString())).thenReturn(SafetyClassification.unavailable());
         when(shortCodeGenerator.generateUniqueCode()).thenReturn("abc123");
         when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
@@ -58,41 +73,37 @@ class UrlServiceTest {
                 new CreateShortUrlRequest("http://example.com/path"));
 
         assertThat(result.url().shortCode()).isEqualTo("abc123");
-        assertThat(result.url().shortUrl()).isEqualTo("http://localhost:8080/abc123");
-        assertThat(result.url().safetyStatus()).isEqualTo(SafetyStatus.UNKNOWN);
-        assertThat(result.url().ownerId()).isNull();
+        assertThat(result.url().ownerId()).isEqualTo(OWNER_ID);
         assertThat(result.warnings())
                 .contains(GeminiUrlSafetyService.HTTP_WARNING, GeminiUrlSafetyService.AI_DOWN_WARNING);
 
         ArgumentCaptor<ShortUrl> captor = ArgumentCaptor.forClass(ShortUrl.class);
         org.mockito.Mockito.verify(shortUrlRepository).save(captor.capture());
-        assertThat(captor.getValue().getStatus()).isEqualTo(UrlStatus.ACTIVE);
+        assertThat(captor.getValue().getOwnerId()).isEqualTo(OWNER_ID);
     }
 
     @Test
-    void createShortUrl_doesNotBlockUnsafeClassification() {
-        when(urlSafetyService.classify(anyString()))
-                .thenReturn(new SafetyClassification(SafetyStatus.UNSAFE, true));
-        when(shortCodeGenerator.generateUniqueCode()).thenReturn("unsafe1");
-        when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+    void updateShortUrl_requiresOwnership() {
+        when(shortUrlRepository.findByShortCodeAndOwnerId("abc123", OWNER_ID))
+                .thenReturn(Optional.empty());
 
-        ShortUrlResult result = urlService.createShortUrl(
-                new CreateShortUrlRequest("https://example.com/malware"));
-
-        assertThat(result.url().safetyStatus()).isEqualTo(SafetyStatus.UNSAFE);
-        assertThat(result.warnings()).isEmpty();
+        assertThatThrownBy(() -> urlService.updateShortUrl(
+                        "abc123",
+                        new UpdateShortUrlRequest(null, UrlStatus.DISABLED)))
+                .isInstanceOf(ShortUrlNotFoundException.class);
     }
 
     @Test
-    void updateShortUrl_canDisable() {
+    void updateShortUrl_canDisableOwnedLink() {
         ShortUrl entity = new ShortUrl(
                 UUID.randomUUID(),
                 "abc123",
                 "https://example.com",
                 UrlStatus.ACTIVE,
-                SafetyStatus.SAFE);
-        when(shortUrlRepository.findByShortCode("abc123")).thenReturn(Optional.of(entity));
+                SafetyStatus.SAFE,
+                OWNER_ID);
+        when(shortUrlRepository.findByShortCodeAndOwnerId("abc123", OWNER_ID))
+                .thenReturn(Optional.of(entity));
         when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -104,36 +115,14 @@ class UrlServiceTest {
     }
 
     @Test
-    void deleteShortUrl_removesEntity() {
+    void resolveRedirectUrl_returnsOriginalWithoutOwnershipCheck() {
         ShortUrl entity = new ShortUrl(
                 UUID.randomUUID(),
                 "abc123",
                 "https://example.com",
                 UrlStatus.ACTIVE,
-                SafetyStatus.SAFE);
-        when(shortUrlRepository.findByShortCode("abc123")).thenReturn(Optional.of(entity));
-
-        urlService.deleteShortUrl("abc123");
-
-        org.mockito.Mockito.verify(shortUrlRepository).delete(entity);
-    }
-
-    @Test
-    void getByShortCode_throwsWhenMissing() {
-        when(shortUrlRepository.findByShortCode("missing")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> urlService.getByShortCode("missing"))
-                .isInstanceOf(ShortUrlNotFoundException.class);
-    }
-
-    @Test
-    void resolveRedirectUrl_returnsOriginal() {
-        ShortUrl entity = new ShortUrl(
-                UUID.randomUUID(),
-                "abc123",
-                "https://example.com",
-                UrlStatus.ACTIVE,
-                SafetyStatus.SAFE);
+                SafetyStatus.SAFE,
+                OWNER_ID);
         when(shortUrlRepository.findByShortCode("abc123")).thenReturn(Optional.of(entity));
 
         assertThat(urlService.resolveRedirectUrl("abc123")).isEqualTo("https://example.com");

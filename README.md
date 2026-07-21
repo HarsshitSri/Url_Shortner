@@ -2,154 +2,114 @@
 
 Resume-grade URL shortener built as a monorepo:
 
-- **Backend:** Java 21, Spring Boot 3.4, Postgres, Flyway, Spring AI (Gemini)
-- **Frontend:** HTML, CSS, basic JS
+- **Backend:** Java 21, Spring Boot 3.4, Postgres, Flyway, Spring Security + JWT, Spring AI (Gemini)
+- **Frontend:** HTML, CSS, basic JS (`index`, `login`, `register`, OAuth callback)
 - **Deploy targets:** Vercel (UI) · Railway (API) · Neon (database)
-- **Current release:** **v2.0.0** (link management). **v1.0.0** was create/redirect/tour.
+- **Current release:** **v3.0.0** (auth + ownership + optional OAuth). Tags: `v1.0.0`, `v2.0.0`, `v3.0.0`
 
-## Features
+## Features by version
 
-### Version 1
-- Create short URLs (random 6-char Base62)
-- `302 Found` redirects
-- Metadata lookup
-- Soft Gemini safety + HTTP / AI-down warnings
-- Welcome UI with tour + create form + example dropdown
+### v1
+- Create, 302 redirect, metadata, soft Gemini safety, tour UI
 
-### Version 2
-- Consistent API envelope (`success`, `data`, `meta`, `warnings`, `error`)
-- List links with **pagination**, **sorting**, **search** (`q`), **filters** (`status`, `safetyStatus`)
-- **PATCH** edit destination and/or enable/disable
-- **DELETE** hard-remove a short URL
-- Links dashboard UI (search/filter/sort/pager + edit/disable/delete)
-- Nullable `owner_id` column + `com.urlshortener.auth` package placeholder for **v3 JWT auth**
+### v2
+- API envelope, list with pagination/sort/search/filter, PATCH/DELETE, Links dashboard, `owner_id` placeholder
 
-### Planned Version 3
-- JWT register/login (Spring Security)
-- Enforce `owner_id` on create/list/update/delete
-- Private “my links” scoped to the authenticated user
-
-### Still out of scope
-- Click analytics, custom aliases, rate limiting
-
-## Repository layout
-
-```
-Url_Shortner/
-├── README.md
-├── backend/
-│   ├── docker-compose.yml          Postgres on host port 5434
-│   ├── pom.xml
-│   └── src/main/java/com/urlshortener/
-│       ├── auth/                   v3 placeholder (package-info only)
-│       ├── config/
-│       ├── domain/
-│       ├── repository/             JPA + Specifications
-│       ├── service/
-│       ├── safety/
-│       ├── tour/
-│       ├── web/ + dto/             Envelope + controllers
-│       └── exception/
-└── frontend/                       Welcome + Links dashboard
-```
-
-## Architecture
-
-```
-Vercel (frontend) --CORS--> Railway (Spring Boot)
-                               │
-                             Neon Postgres
-```
-
-Locally: `Browser :5500 → API :8080 → Postgres :5434`
+### v3
+- Email/password register + login (JWT)
+- Create / list / get / patch / delete require `Authorization: Bearer …`
+- Redirects + tour + health stay public
+- Each new link stores `owner_id`; list/manage are owner-scoped
+- Legacy `owner_id = null` links remain orphaned (redirects still work; they do not appear in “My links”)
+- Separate `login.html` / `register.html`; token in `localStorage`
+- Optional Google + GitHub OAuth (Spring OAuth2 → same JWT → `oauth-callback.html`)
 
 ## Quick start (local)
 
 ```bash
-# DB
 cd backend && docker compose up -d
-
-# API
 cp .env.example .env
 export $(grep -v '^#' .env | xargs)
 mvn spring-boot:run
 
-# UI
 cd ../frontend && python3 -m http.server 5500
 ```
 
-Open `http://localhost:5500`.  
-Gemini optional: set `GEMINI_API_KEY` and `SPRING_AI_MODEL_CHAT=google-genai`.
+Open `http://localhost:5500` → **Register** → create links.
 
-## API
+Postgres host port: **5434**. API: **8080**.
 
-All JSON endpoints use the envelope:
+## Auth API
 
-```json
-{
-  "success": true,
-  "data": {},
-  "meta": null,
-  "warnings": [],
-  "error": null
-}
-```
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| `POST` | `/api/v1/auth/register` | public | email + password (min 8) → JWT |
+| `POST` | `/api/v1/auth/login` | public | → JWT |
+| `GET` | `/api/v1/auth/me` | JWT | current user |
+| `GET` | `/api/v1/auth/providers` | public | enabled OAuth providers (`google`, `github`) |
+| Browser | `/oauth2/authorization/{google\|github}` | public | starts OAuth; redirects to frontend with JWT |
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/v1/urls` | Create |
-| `GET` | `/api/v1/urls` | List (`page`, `size`, `sort`, `q`, `status`, `safetyStatus`) |
-| `GET` | `/api/v1/urls/{code}` | Metadata (ACTIVE only) |
-| `PATCH` | `/api/v1/urls/{code}` | Update `originalUrl` and/or `status` (`ACTIVE`/`DISABLED`) |
-| `DELETE` | `/api/v1/urls/{code}` | Delete |
-| `GET` | `/api/v1/tour` | Product tour |
-| `GET` | `/{code}` | 302 redirect (ACTIVE only) |
-| `GET` | `/actuator/health` | Health |
+### Google / GitHub OAuth
 
-### List example
+1. Set `FRONTEND_BASE_URL` to your UI origin (local: `http://localhost:5500`).
+2. Create OAuth apps and set redirect URIs to the **API** (not the frontend):
+   - Google: `{APP_BASE_URL}/login/oauth2/code/google`
+   - GitHub: `{APP_BASE_URL}/login/oauth2/code/github`
+3. Put `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` and/or `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` in `backend/.env`.
+4. Restart the API. Login/register pages call `/api/v1/auth/providers` and show only configured providers.
+5. After consent, the API issues the same JWT and redirects to `{FRONTEND_BASE_URL}/oauth-callback.html?token=…`.
+
+OAuth-only accounts have no password; password login tells the user to use Google/GitHub. Matching email links into an existing account.
+
+Example:
 
 ```bash
-curl -s 'http://localhost:8080/api/v1/urls?q=example&page=0&size=10&sort=createdAt,desc'
-```
-
-### Patch example
-
-```bash
-curl -s -X PATCH http://localhost:8080/api/v1/urls/aB92xK \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"originalUrl":"https://example.com/new","status":"DISABLED"}'
+  -d '{"email":"you@example.com","password":"password1"}' | jq -r .data.token)
+
+curl -s -X POST http://localhost:8080/api/v1/urls \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"originalUrl":"https://example.com"}'
 ```
 
-### DTOs
-`CreateShortUrlRequest`, `UpdateShortUrlRequest`, `ShortUrlResponse`, `TourResponse`, `ApiResponse`, `PageMeta`, `ErrorBody`, `ShortUrlResult`
+## URL API (authenticated unless noted)
 
-## Data model (`short_urls`)
+| Method | Path | Auth |
+|--------|------|------|
+| `POST` | `/api/v1/urls` | JWT |
+| `GET` | `/api/v1/urls` | JWT (own links only) |
+| `GET` | `/api/v1/urls/{code}` | JWT (own only) |
+| `PATCH` | `/api/v1/urls/{code}` | JWT (own only) |
+| `DELETE` | `/api/v1/urls/{code}` | JWT (own only) |
+| `GET` | `/api/v1/tour` | public |
+| `GET` | `/{code}` | public redirect |
+| `GET` | `/actuator/health` | public |
 
-| Column | Notes |
-|--------|--------|
-| `id` | UUID PK |
-| `short_code` | Unique |
-| `original_url` | Destination |
-| `status` | ACTIVE / BLOCKED / DISABLED |
-| `safety_status` | SAFE / SUSPICIOUS / UNSAFE / UNKNOWN |
-| `owner_id` | UUID NULL — **v3 auth placeholder** |
-| `created_at` / `updated_at` | Timestamps |
+All JSON uses the envelope: `success`, `data`, `meta`, `warnings`, `error`.
 
-Migrations: `V1__create_short_urls.sql`, `V2__add_owner_id_and_indexes.sql`
-
-## Environment variables
+## Environment
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | JDBC URL (local default port **5434**) |
+| `DATABASE_URL` | JDBC URL (local default port 5434) |
 | `DATABASE_USERNAME` / `DATABASE_PASSWORD` | DB credentials |
-| `APP_BASE_URL` | Public API URL in `shortUrl` |
+| `APP_BASE_URL` | Public API URL in short links |
 | `CORS_ALLOWED_ORIGINS` | Frontend origins |
-| `GEMINI_API_KEY` | Google AI Studio key |
-| `SPRING_AI_MODEL_CHAT` | `none` (default) or `google-genai` |
-| `PORT` | Server port |
+| `JWT_SECRET` | HMAC secret (use a long random value in prod) |
+| `JWT_EXPIRATION_MS` | Default `86400000` (1 day) |
+| `FRONTEND_BASE_URL` | UI origin for OAuth success/error redirects |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional Google OAuth |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | Optional GitHub OAuth |
+| `GEMINI_API_KEY` / `SPRING_AI_MODEL_CHAT` | Optional AI (`none` by default) |
 
-Frontend: set `window.SHORTLINK_API_BASE` in `frontend/js/config.js`.
+## Data model
+
+- `users` — id, email, nullable `password_hash`, `auth_provider`, `provider_subject`, timestamps
+- `short_urls` — includes nullable `owner_id` (set on authenticated create)
+
+Migrations: `V1` schema, `V2` owner_id/indexes, `V3` users, `V4` OAuth columns.
 
 ## Tests
 
@@ -157,12 +117,12 @@ Frontend: set `window.SHORTLINK_API_BASE` in `frontend/js/config.js`.
 cd backend && mvn test
 ```
 
-Unit + Testcontainers integration (skipped if Docker unavailable).
+Unit tests cover auth + ownership. Integration tests (Testcontainers) cover register → owned CRUD → cross-user 404 → public redirect/tour.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
-| Auth failed for `urlshortener` on 5432 | Use Docker on **5434** |
-| GenAI project-id must be set | Keep `SPRING_AI_MODEL_CHAT=none` or set key + `google-genai` |
-| CORS errors | Add UI origin to `CORS_ALLOWED_ORIGINS`; allow PATCH/DELETE |
+| 401 on create/list | Register/login and send `Authorization: Bearer …` |
+| Empty “My links” | You only see links created while logged in; pre-auth orphans are hidden |
+| GenAI project-id error | Keep `SPRING_AI_MODEL_CHAT=none` or set Gemini key + `google-genai` |

@@ -1,5 +1,6 @@
 package com.urlshortener.service;
 
+import com.urlshortener.auth.SecurityUtils;
 import com.urlshortener.config.AppProperties;
 import com.urlshortener.domain.SafetyStatus;
 import com.urlshortener.domain.ShortUrl;
@@ -52,6 +53,7 @@ public class UrlService {
 
     @Transactional
     public ShortUrlResult createShortUrl(CreateShortUrlRequest request) {
+        UUID ownerId = SecurityUtils.currentUserId();
         String originalUrl = request.originalUrl().trim();
         List<String> warnings = new ArrayList<>();
         SafetyStatus safetyStatus = classifyWithWarnings(originalUrl, warnings);
@@ -62,15 +64,16 @@ public class UrlService {
                 shortCode,
                 originalUrl,
                 UrlStatus.ACTIVE,
-                safetyStatus);
+                safetyStatus,
+                ownerId);
 
         ShortUrl saved = shortUrlRepository.save(entity);
         return new ShortUrlResult(toResponse(saved), warnings);
     }
 
     @Transactional(readOnly = true)
-    public ShortUrlResponse getByShortCode(String shortCode) {
-        return toResponse(findActiveOrThrow(shortCode));
+    public ShortUrlResponse getOwnedByShortCode(String shortCode) {
+        return toResponse(findOwnedOrThrow(shortCode));
     }
 
     @Transactional(readOnly = true)
@@ -80,9 +83,10 @@ public class UrlService {
 
     @Transactional(readOnly = true)
     public Page<ShortUrlResponse> listUrls(String q, UrlStatus status, SafetyStatus safetyStatus, Pageable pageable) {
+        UUID ownerId = SecurityUtils.currentUserId();
         Pageable safePageable = sanitizePageable(pageable);
         return shortUrlRepository
-                .findAll(ShortUrlSpecifications.withFilters(q, status, safetyStatus), safePageable)
+                .findAll(ShortUrlSpecifications.withFilters(ownerId, q, status, safetyStatus), safePageable)
                 .map(this::toResponse);
     }
 
@@ -105,9 +109,7 @@ public class UrlService {
             throw new IllegalArgumentException("Provide originalUrl and/or status to update");
         }
 
-        ShortUrl entity = shortUrlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new ShortUrlNotFoundException(shortCode));
-
+        ShortUrl entity = findOwnedOrThrow(shortCode);
         List<String> warnings = new ArrayList<>();
 
         if (request.status() != null) {
@@ -130,8 +132,7 @@ public class UrlService {
 
     @Transactional
     public void deleteShortUrl(String shortCode) {
-        ShortUrl entity = shortUrlRepository.findByShortCode(shortCode)
-                .orElseThrow(() -> new ShortUrlNotFoundException(shortCode));
+        ShortUrl entity = findOwnedOrThrow(shortCode);
         shortUrlRepository.delete(entity);
     }
 
@@ -144,6 +145,12 @@ public class UrlService {
             warnings.add(GeminiUrlSafetyService.AI_DOWN_WARNING);
         }
         return classification.status();
+    }
+
+    private ShortUrl findOwnedOrThrow(String shortCode) {
+        UUID ownerId = SecurityUtils.currentUserId();
+        return shortUrlRepository.findByShortCodeAndOwnerId(shortCode, ownerId)
+                .orElseThrow(() -> new ShortUrlNotFoundException(shortCode));
     }
 
     private ShortUrl findActiveOrThrow(String shortCode) {

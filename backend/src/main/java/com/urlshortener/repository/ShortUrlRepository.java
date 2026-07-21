@@ -10,5 +10,7 @@ public interface ShortUrlRepository extends JpaRepository<ShortUrl, UUID>, JpaSp
 
     Optional<ShortUrl> findByShortCode(String shortCode);
 
+    Optional<ShortUrl> findByShortCodeAndOwnerId(String shortCode, UUID ownerId);
+
     boolean existsByShortCode(String shortCode);
 }

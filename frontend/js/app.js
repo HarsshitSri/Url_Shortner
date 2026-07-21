@@ -1,5 +1,6 @@
 (() => {
   const apiBase = (window.SHORTLINK_API_BASE || "http://localhost:8080").replace(/\/$/, "");
+  const auth = window.ShortLinkAuth;
 
   const tourBtn = document.getElementById("tourBtn");
   const tourPanel = document.getElementById("tour");
@@ -14,9 +15,13 @@
   const safetyStatusEl = document.getElementById("safetyStatus");
   const warningsList = document.getElementById("warningsList");
   const copyBtn = document.getElementById("copyBtn");
-  const apiBaseLabel = document.getElementById("apiBaseLabel");
   const originalUrlInput = document.getElementById("originalUrl");
   const exampleLinks = document.getElementById("exampleLinks");
+  const topAuth = document.getElementById("topAuth");
+  const createPanel = document.getElementById("create");
+  const linksPanel = document.getElementById("links");
+  const githubLink = document.querySelector('.footer-link[href*="github"]');
+  const linkedinLink = document.getElementById("linkedinLink");
 
   const linksFilterForm = document.getElementById("linksFilterForm");
   const linksTableBody = document.getElementById("linksTableBody");
@@ -32,7 +37,59 @@
     totalPages: 0,
   };
 
-  apiBaseLabel.textContent = apiBase;
+  if (githubLink && window.SHORTLINK_GITHUB_URL) {
+    githubLink.href = window.SHORTLINK_GITHUB_URL;
+  }
+  if (linkedinLink && window.SHORTLINK_LINKEDIN_URL) {
+    linkedinLink.href = window.SHORTLINK_LINKEDIN_URL;
+  }
+
+  function renderAuthNav() {
+    topAuth.replaceChildren();
+
+    if (auth.isLoggedIn()) {
+      const user = auth.getUser();
+      const email = document.createElement("span");
+      email.className = "user-email";
+      email.textContent = user && user.email ? user.email : "Signed in";
+
+      const logoutBtn = document.createElement("button");
+      logoutBtn.type = "button";
+      logoutBtn.className = "btn btn-ghost";
+      logoutBtn.textContent = "Log out";
+      logoutBtn.addEventListener("click", () => {
+        auth.clearSession();
+        window.location.reload();
+      });
+
+      topAuth.append(email, logoutBtn);
+    } else {
+      const login = document.createElement("a");
+      login.className = "btn btn-secondary";
+      login.href = "login.html";
+      login.textContent = "Log in";
+
+      const register = document.createElement("a");
+      register.className = "btn btn-primary";
+      register.href = "register.html";
+      register.textContent = "Register";
+
+      topAuth.append(login, register);
+    }
+  }
+
+  function applyAuthGates() {
+    const loggedIn = auth.isLoggedIn();
+    createPanel.hidden = !loggedIn;
+    linksPanel.hidden = !loggedIn;
+    tourBtn.hidden = !loggedIn;
+    document.querySelectorAll(".landing-only").forEach((el) => {
+      el.hidden = loggedIn;
+    });
+    if (!loggedIn) {
+      tourPanel.hidden = true;
+    }
+  }
 
   exampleLinks.addEventListener("change", () => {
     if (!exampleLinks.value) return;
@@ -41,10 +98,14 @@
     exampleLinks.selectedIndex = 0;
   });
 
-  async function fetchJson(path, options) {
+  async function fetchJson(path, options = {}) {
     const response = await fetch(`${apiBase}${path}`, {
-      headers: { "Content-Type": "application/json", ...(options && options.headers) },
       ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...auth.authHeaders(),
+        ...(options.headers || {}),
+      },
     });
 
     let body = null;
@@ -55,6 +116,11 @@
       } catch {
         body = { success: false, error: { message: text } };
       }
+    }
+
+    if (response.status === 401) {
+      auth.clearSession();
+      throw new Error("Session expired. Please log in again.");
     }
 
     if (!response.ok || (body && body.success === false)) {
@@ -159,6 +225,9 @@
   }
 
   async function loadLinks(page = 0) {
+    if (!auth.isLoggedIn()) {
+      return;
+    }
     clearLinksError();
     linksTableBody.innerHTML = `<tr><td colspan="6" class="empty">Loading links…</td></tr>`;
 
@@ -374,5 +443,9 @@
     loadLinks(0);
   });
 
-  loadLinks(0);
+  renderAuthNav();
+  applyAuthGates();
+  if (auth.isLoggedIn()) {
+    loadLinks(0);
+  }
 })();

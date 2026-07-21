@@ -3,6 +3,7 @@ package com.urlshortener.repository;
 import com.urlshortener.domain.SafetyStatus;
 import com.urlshortener.domain.ShortUrl;
 import com.urlshortener.domain.UrlStatus;
+import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -11,10 +12,19 @@ public final class ShortUrlSpecifications {
     private ShortUrlSpecifications() {
     }
 
-    public static Specification<ShortUrl> withFilters(String q, UrlStatus status, SafetyStatus safetyStatus) {
-        return Specification.where(matchesQuery(q))
+    public static Specification<ShortUrl> withFilters(
+            UUID ownerId,
+            String q,
+            UrlStatus status,
+            SafetyStatus safetyStatus) {
+        return Specification.where(ownedBy(ownerId))
+                .and(matchesQuery(q))
                 .and(hasStatus(status))
                 .and(hasSafetyStatus(safetyStatus));
+    }
+
+    private static Specification<ShortUrl> ownedBy(UUID ownerId) {
+        return (root, query, cb) -> cb.equal(root.get("ownerId"), ownerId);
     }
 
     private static Specification<ShortUrl> matchesQuery(String q) {

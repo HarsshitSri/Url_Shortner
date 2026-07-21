@@ -1,5 +1,7 @@
 package com.urlshortener.web;
 
+import com.urlshortener.exception.EmailAlreadyExistsException;
+import com.urlshortener.exception.InvalidCredentialsException;
 import com.urlshortener.exception.ShortCodeGenerationException;
 import com.urlshortener.exception.ShortUrlNotFoundException;
 import com.urlshortener.web.dto.ApiResponse;
@@ -26,7 +28,8 @@ public class GlobalExceptionHandler {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()
                 .map(this::formatFieldError)
                 .toList();
-        return build(HttpStatus.BAD_REQUEST, "Validation failed", request.getRequestURI(), details);
+        String message = details.isEmpty() ? "Validation failed" : String.join("; ", details);
+        return build(HttpStatus.BAD_REQUEST, message, request.getRequestURI(), details);
     }
 
     @ExceptionHandler(ShortUrlNotFoundException.class)
@@ -41,6 +44,20 @@ public class GlobalExceptionHandler {
             ShortCodeGenerationException ex,
             HttpServletRequest request) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getRequestURI(), List.of());
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEmailExists(
+            EmailAlreadyExistsException ex,
+            HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), request.getRequestURI(), List.of());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(
+            InvalidCredentialsException ex,
+            HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request.getRequestURI(), List.of());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

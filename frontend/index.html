@@ -8,20 +8,173 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/theme.js"></script>
 </head>
 <body>
   <div class="atmosphere" aria-hidden="true"></div>
+  <div class="top-bar">
+    <button type="button" id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" aria-pressed="false"></button>
+    <nav id="topAuth" class="top-auth" aria-label="Account"></nav>
+  </div>
 
   <main class="shell">
     <header class="brand-block">
-      <p class="brand">ShortLink</p>
-      <p class="tagline">Short links with a soft AI safety check — share faster, stay informed.</p>
-      <div class="actions">
-        <button type="button" id="tourBtn" class="btn btn-secondary">Take the tour</button>
-        <a class="btn btn-ghost" href="#create">Skip to create</a>
-        <a class="btn btn-ghost" href="#links">View links</a>
+      <div class="brand-hero">
+        <div class="brand-copy">
+          <p class="brand">ShortLink</p>
+          <p class="tagline">Short links with a soft AI safety check — share faster, stay informed.</p>
+          <div class="actions" id="headerActions">
+            <button type="button" id="tourBtn" class="btn btn-secondary" hidden>Take the tour</button>
+          </div>
+        </div>
+        <figure class="mascot" aria-label="ShortLink mascot — scissors cutting a long URL down to size">
+          <!-- Static SVG. Edit in Figma/Inkscape, then paste back. -->
+          <svg class="mascot-svg" viewBox="0 0 380 240" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="mascotTitle mascotDesc">
+            <title id="mascotTitle">Snip</title>
+            <desc id="mascotDesc">A pair of scissors cutting a long URL, leaving a short link.</desc>
+
+            <defs>
+              <linearGradient id="bladeSteel" x1="140" y1="40" x2="240" y2="180" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#f4f7fb"/>
+                <stop offset="0.5" stop-color="#c5d0de"/>
+                <stop offset="1" stop-color="#8a9bb0"/>
+              </linearGradient>
+              <linearGradient id="handleFill" x1="0" y1="0" x2="1" y2="1">
+                <stop stop-color="var(--accent)"/>
+                <stop offset="1" stop-color="var(--accent-deep)"/>
+              </linearGradient>
+              <linearGradient id="urlRibbon" x1="40" y1="0" x2="340" y2="0" gradientUnits="userSpaceOnUse">
+                <stop stop-color="var(--accent-soft)"/>
+                <stop offset="1" stop-color="var(--surface)"/>
+              </linearGradient>
+            </defs>
+
+            <ellipse cx="190" cy="218" rx="110" ry="10" fill="var(--ink)" opacity="0.1"/>
+
+            <!-- Long URL ribbon (left of cut) -->
+            <g>
+              <rect x="24" y="96" width="168" height="36" rx="18" fill="url(#urlRibbon)" stroke="var(--ink)" stroke-width="2"/>
+              <text x="40" y="119" fill="var(--ink)" font-family="Sora, sans-serif" font-size="11" font-weight="600">https://verylong.example/…</text>
+            </g>
+
+            <!-- Short stub (right of cut) -->
+            <g>
+              <rect x="248" y="96" width="108" height="36" rx="18" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="2"/>
+              <text x="268" y="119" fill="var(--accent-deep)" font-family="Sora, sans-serif" font-size="14" font-weight="700">short.ly/xy</text>
+            </g>
+
+            <!-- Cut gap sparks -->
+            <g stroke="var(--accent-deep)" stroke-width="2" stroke-linecap="round" opacity="0.7">
+              <path d="M198 88 L198 78"/>
+              <path d="M190 92 L182 84"/>
+              <path d="M206 92 L214 84"/>
+              <path d="M198 140 L198 150"/>
+              <path d="M190 136 L182 144"/>
+              <path d="M206 136 L214 144"/>
+            </g>
+
+            <!-- Scissors (open, mid-cut) -->
+            <g transform="translate(200 114)">
+              <!-- Upper blade -->
+              <path d="M6 -6
+                       L88 -28
+                       L94 -20
+                       L14 2
+                       Z"
+                    fill="url(#bladeSteel)"
+                    stroke="var(--ink)"
+                    stroke-width="2"
+                    stroke-linejoin="round"/>
+              <!-- Lower blade -->
+              <path d="M6 6
+                       L88 28
+                       L94 20
+                       L14 -2
+                       Z"
+                    fill="url(#bladeSteel)"
+                    stroke="var(--ink)"
+                    stroke-width="2"
+                    stroke-linejoin="round"/>
+
+              <path d="M18 -8 L82 -24" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+              <path d="M18 8 L82 24" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.35"/>
+
+              <!-- Pivot -->
+              <circle cx="8" cy="0" r="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+              <circle cx="8" cy="0" r="3.5" fill="var(--accent)"/>
+
+              <!-- Upper handle ring -->
+              <circle cx="-36" cy="-28" r="20" fill="none" stroke="url(#handleFill)" stroke-width="11"/>
+              <circle cx="-36" cy="-28" r="20" fill="none" stroke="var(--ink)" stroke-width="2"/>
+              <circle cx="-36" cy="-28" r="11" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.4"/>
+
+              <!-- Lower handle ring -->
+              <circle cx="-36" cy="28" r="20" fill="none" stroke="url(#handleFill)" stroke-width="11"/>
+              <circle cx="-36" cy="28" r="20" fill="none" stroke="var(--ink)" stroke-width="2"/>
+              <circle cx="-36" cy="28" r="11" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.4"/>
+
+              <!-- Shanks -->
+              <path d="M-18 -18 L2 -4" stroke="url(#handleFill)" stroke-width="9" stroke-linecap="round"/>
+              <path d="M-18 18 L2 4" stroke="url(#handleFill)" stroke-width="9" stroke-linecap="round"/>
+              <path d="M-18 -18 L2 -4 M-18 18 L2 4" stroke="var(--ink)" stroke-width="1.6" fill="none"/>
+            </g>
+
+            <!-- Tiny caption chip -->
+            <rect x="132" y="178" width="116" height="26" rx="13" fill="var(--surface)" stroke="var(--line)" stroke-width="1.5"/>
+            <text x="148" y="195" fill="var(--muted)" font-family="Sora, sans-serif" font-size="11" font-weight="600">snip the long link</text>
+          </svg>
+          <figcaption class="mascot-caption">Meet <strong>Snip</strong> — scissors for oversized URLs.</figcaption>
+        </figure>
       </div>
     </header>
+
+    <section id="howItWorks" class="landing-section landing-only">
+      <h2>How it works</h2>
+      <p class="support">Three steps from a long URL to a shareable short link.</p>
+      <ol class="flow-steps">
+        <li>
+          <div class="flow-copy">
+            <h3>Paste</h3>
+            <p>Sign in and drop any http or https URL into ShortLink.</p>
+          </div>
+        </li>
+        <li>
+          <div class="flow-copy">
+            <h3>Check</h3>
+            <p>A soft AI pass looks for safety signals and adds warnings when something feels off.</p>
+          </div>
+        </li>
+        <li>
+          <div class="flow-copy">
+            <h3>Share</h3>
+            <p>Get a short code, copy it, and manage your links anytime from your dashboard.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="softSafety" class="landing-section landing-only">
+      <h2>Soft AI safety</h2>
+      <p class="support">We inform you — we don’t block you from shortening.</p>
+      <div class="safety-points">
+        <p>
+          <strong>Warnings, not walls.</strong>
+          Suspicious or plain HTTP destinations still shorten. You’ll see a clear note so you can decide.
+        </p>
+        <p>
+          <strong>Honest when AI is down.</strong>
+          If the safety assistant is unavailable, we say so: proceed at your own risk.
+        </p>
+        <p>
+          <strong>Status stays with the link.</strong>
+          SAFE, SUSPICIOUS, UNSAFE, or UNKNOWN rides along with every short URL you create.
+        </p>
+      </div>
+      <p class="landing-cta">
+        <a class="btn btn-primary" href="register.html">Create a free account</a>
+        <a class="btn btn-ghost" href="login.html">Log in</a>
+      </p>
+    </section>
 
     <section id="tour" class="tour-panel" hidden>
       <div class="tour-header">
@@ -31,7 +184,7 @@
       <ol id="tourSteps" class="tour-steps"></ol>
     </section>
 
-    <section id="create" class="create-panel">
+    <section id="create" class="create-panel" hidden>
       <h2>Create a short link</h2>
       <p class="support">Paste an http or https URL. We’ll shorten it and surface any safety notes.</p>
 
@@ -73,11 +226,11 @@
       </div>
     </section>
 
-    <section id="links" class="links-panel">
+    <section id="links" class="links-panel" hidden>
       <div class="links-header">
         <div>
-          <h2>Links</h2>
-          <p class="support">Search, filter, and manage shortened URLs. Auth &amp; private ownership coming in v3.</p>
+          <h2>My links</h2>
+          <p class="support">Search, filter, and manage links you own.</p>
         </div>
         <button type="button" id="refreshLinksBtn" class="btn btn-secondary">Refresh</button>
       </div>
@@ -143,10 +296,25 @@
   </main>
 
   <footer class="footer">
-    <span>API: <code id="apiBaseLabel"></code></span>
+    <p class="footer-credit">
+      <span class="footer-label">Developed by</span>
+      <a class="footer-link" href="https://github.com/HarsshitSri" target="_blank" rel="noopener noreferrer" aria-label="Harshit Srivastava on GitHub">
+        <svg class="footer-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.73 0 0 .84-.27 2.75 1.05A9.3 9.3 0 0 1 12 6.84c.85 0 1.71.12 2.51.35 1.91-1.32 2.75-1.05 2.75-1.05.55 1.42.2 2.47.1 2.73.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.8-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.59.69.49A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z"/>
+        </svg>
+        <span>Harshit Srivastava</span>
+      </a>
+      <a class="footer-link" id="linkedinLink" href="https://www.linkedin.com/in/harsshit" target="_blank" rel="noopener noreferrer" aria-label="Harshit Srivastava on LinkedIn">
+        <svg class="footer-icon footer-icon--linkedin" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1-.01-4.12 2.06 2.06 0 0 1 .01 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.46c.98 0 1.77-.77 1.77-1.73V1.73C24 .77 23.21 0 22.23 0z"/>
+        </svg>
+        <span>Harshit Srivastava</span>
+      </a>
+    </p>
   </footer>
 
   <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

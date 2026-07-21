@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — ShortLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="top-bar">
+    <button type="button" id="themeToggle" class="theme-toggle" aria-label="Toggle color theme" aria-pressed="false"></button>
+  </div>
+  <main class="shell auth-shell">
+    <a class="brand-link" href="index.html">
+      <svg class="mascot-mark" viewBox="0 0 64 64" aria-hidden="true">
+        <rect x="4" y="28" width="22" height="10" rx="5" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="1.2"/>
+        <rect x="38" y="28" width="22" height="10" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"/>
+        <path d="M32 18 L48 30 L44 34 L28 22 Z" fill="#c5d0de" stroke="var(--ink)" stroke-width="1.2"/>
+        <path d="M32 46 L48 34 L44 30 L28 42 Z" fill="#c5d0de" stroke="var(--ink)" stroke-width="1.2"/>
+        <circle cx="26" cy="32" r="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.2"/>
+        <circle cx="18" cy="20" r="7" fill="none" stroke="var(--accent)" stroke-width="3.5"/>
+        <circle cx="18" cy="44" r="7" fill="none" stroke="var(--accent)" stroke-width="3.5"/>
+      </svg>
+      ShortLink
+    </a>
+    <section class="auth-panel">
+      <h1>Log in</h1>
+      <p class="support">Manage your short links with a JWT session.</p>
+      <form id="loginForm" class="auth-form" novalidate>
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="username" required />
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required minlength="8" />
+        <button type="submit" class="btn btn-primary" id="loginBtn">Log in</button>
+      </form>
+      <div id="oauthButtons" class="oauth-block" hidden></div>
+      <p id="authError" class="error-box" hidden></p>
+      <p class="auth-switch">No account? <a href="register.html">Register</a></p>
+    </section>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/oauth.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
