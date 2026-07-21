@@ -1,5 +1,5 @@
 {
-  "rewrites": [],
-  "buildCommand": "sh scripts/write-config.sh",
-  "outputDirectory": "."
+  "buildCommand": "npm run build",
+  "outputDirectory": ".",
+  "installCommand": "npm install --ignore-scripts"
 }

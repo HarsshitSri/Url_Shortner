@@ -55,7 +55,7 @@
       window.location.href = "index.html";
     } catch (err) {
       errorBox.hidden = false;
-      errorBox.textContent = err.message || "Registration failed";
+      errorBox.textContent = window.ShortLinkAuth.explainFetchError(err);
     } finally {
       button.disabled = false;
       button.textContent = "Register";

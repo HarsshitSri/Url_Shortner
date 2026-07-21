@@ -1,0 +1,7 @@
+{
+  "name": "shortlink-frontend",
+  "private": true,
+  "scripts": {
+    "build": "sh scripts/write-config.sh"
+  }
+}
