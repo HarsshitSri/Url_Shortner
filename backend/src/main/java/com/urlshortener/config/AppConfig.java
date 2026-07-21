@@ -19,7 +19,7 @@ public class AppConfig {
                 List<String> origins = appProperties.getCors().allowedOriginList();
                 registry.addMapping("/api/**")
                         .allowedOrigins(origins.toArray(String[]::new))
-                        .allowedMethods("GET", "POST", "OPTIONS")
+                        .allowedMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*");
             }
         };

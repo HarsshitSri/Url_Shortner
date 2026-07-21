@@ -32,6 +32,12 @@ public class ShortUrl {
     @Column(name = "safety_status", nullable = false, length = 32)
     private SafetyStatus safetyStatus;
 
+    /**
+     * Placeholder for v3 JWT ownership. Always null in v2.
+     */
+    @Column(name = "owner_id")
+    private UUID ownerId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -47,6 +53,7 @@ public class ShortUrl {
         this.originalUrl = originalUrl;
         this.status = status;
         this.safetyStatus = safetyStatus;
+        this.ownerId = null;
     }
 
     @PrePersist
@@ -73,12 +80,28 @@ public class ShortUrl {
         return originalUrl;
     }
 
+    public void setOriginalUrl(String originalUrl) {
+        this.originalUrl = originalUrl;
+    }
+
     public UrlStatus getStatus() {
         return status;
     }
 
+    public void setStatus(UrlStatus status) {
+        this.status = status;
+    }
+
     public SafetyStatus getSafetyStatus() {
         return safetyStatus;
+    }
+
+    public void setSafetyStatus(SafetyStatus safetyStatus) {
+        this.safetyStatus = safetyStatus;
+    }
+
+    public UUID getOwnerId() {
+        return ownerId;
     }
 
     public Instant getCreatedAt() {

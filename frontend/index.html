@@ -19,6 +19,7 @@
       <div class="actions">
         <button type="button" id="tourBtn" class="btn btn-secondary">Take the tour</button>
         <a class="btn btn-ghost" href="#create">Skip to create</a>
+        <a class="btn btn-ghost" href="#links">View links</a>
       </div>
     </header>
 
@@ -69,6 +70,74 @@
         <p id="safetyStatus" class="meta"></p>
         <ul id="warningsList" class="warnings"></ul>
         <button type="button" id="copyBtn" class="btn btn-secondary">Copy link</button>
+      </div>
+    </section>
+
+    <section id="links" class="links-panel">
+      <div class="links-header">
+        <div>
+          <h2>Links</h2>
+          <p class="support">Search, filter, and manage shortened URLs. Auth &amp; private ownership coming in v3.</p>
+        </div>
+        <button type="button" id="refreshLinksBtn" class="btn btn-secondary">Refresh</button>
+      </div>
+
+      <form id="linksFilterForm" class="links-filters">
+        <input id="searchQ" type="search" placeholder="Search code or URL" />
+        <select id="filterStatus" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          <option value="ACTIVE">ACTIVE</option>
+          <option value="DISABLED">DISABLED</option>
+          <option value="BLOCKED">BLOCKED</option>
+        </select>
+        <select id="filterSafety" aria-label="Filter by safety">
+          <option value="">All safety</option>
+          <option value="SAFE">SAFE</option>
+          <option value="SUSPICIOUS">SUSPICIOUS</option>
+          <option value="UNSAFE">UNSAFE</option>
+          <option value="UNKNOWN">UNKNOWN</option>
+        </select>
+        <select id="sortBy" aria-label="Sort">
+          <option value="createdAt,desc">Newest</option>
+          <option value="createdAt,asc">Oldest</option>
+          <option value="shortCode,asc">Code A–Z</option>
+          <option value="status,asc">Status</option>
+          <option value="safetyStatus,asc">Safety</option>
+        </select>
+        <select id="pageSize" aria-label="Page size">
+          <option value="2" selected>2 / page</option>
+          <option value="5">5 / page</option>
+          <option value="10">10 / page</option>
+          <option value="20">20 / page</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Apply</button>
+      </form>
+
+      <div id="linksError" class="error-box" hidden></div>
+      <div id="linksWarnings" class="warnings" hidden></div>
+
+      <div class="table-wrap">
+        <table class="links-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Destination</th>
+              <th>Status</th>
+              <th>Safety</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="linksTableBody">
+            <tr><td colspan="6" class="empty">Loading links…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pager">
+        <button type="button" id="prevPageBtn" class="btn btn-secondary">Previous</button>
+        <span id="pageInfo" class="page-info">Page 1</span>
+        <button type="button" id="nextPageBtn" class="btn btn-secondary">Next</button>
       </div>
     </section>
   </main>

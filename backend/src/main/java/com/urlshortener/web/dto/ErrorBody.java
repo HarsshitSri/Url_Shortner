@@ -1,12 +1,9 @@
 package com.urlshortener.web.dto;
 
-import java.time.Instant;
 import java.util.List;
 
-public record ApiErrorResponse(
-        Instant timestamp,
+public record ErrorBody(
         int status,
-        String error,
         String message,
         String path,
         List<String> details

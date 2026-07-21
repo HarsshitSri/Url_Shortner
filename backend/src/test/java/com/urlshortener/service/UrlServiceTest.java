@@ -15,7 +15,8 @@ import com.urlshortener.safety.GeminiUrlSafetyService;
 import com.urlshortener.safety.SafetyClassification;
 import com.urlshortener.safety.UrlSafetyService;
 import com.urlshortener.web.dto.CreateShortUrlRequest;
-import com.urlshortener.web.dto.ShortUrlResponse;
+import com.urlshortener.web.dto.ShortUrlResult;
+import com.urlshortener.web.dto.UpdateShortUrlRequest;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,13 +54,14 @@ class UrlServiceTest {
         when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ShortUrlResponse response = urlService.createShortUrl(
+        ShortUrlResult result = urlService.createShortUrl(
                 new CreateShortUrlRequest("http://example.com/path"));
 
-        assertThat(response.shortCode()).isEqualTo("abc123");
-        assertThat(response.shortUrl()).isEqualTo("http://localhost:8080/abc123");
-        assertThat(response.safetyStatus()).isEqualTo(SafetyStatus.UNKNOWN);
-        assertThat(response.warnings())
+        assertThat(result.url().shortCode()).isEqualTo("abc123");
+        assertThat(result.url().shortUrl()).isEqualTo("http://localhost:8080/abc123");
+        assertThat(result.url().safetyStatus()).isEqualTo(SafetyStatus.UNKNOWN);
+        assertThat(result.url().ownerId()).isNull();
+        assertThat(result.warnings())
                 .contains(GeminiUrlSafetyService.HTTP_WARNING, GeminiUrlSafetyService.AI_DOWN_WARNING);
 
         ArgumentCaptor<ShortUrl> captor = ArgumentCaptor.forClass(ShortUrl.class);
@@ -75,11 +77,45 @@ class UrlServiceTest {
         when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ShortUrlResponse response = urlService.createShortUrl(
+        ShortUrlResult result = urlService.createShortUrl(
                 new CreateShortUrlRequest("https://example.com/malware"));
 
-        assertThat(response.safetyStatus()).isEqualTo(SafetyStatus.UNSAFE);
-        assertThat(response.warnings()).isEmpty();
+        assertThat(result.url().safetyStatus()).isEqualTo(SafetyStatus.UNSAFE);
+        assertThat(result.warnings()).isEmpty();
+    }
+
+    @Test
+    void updateShortUrl_canDisable() {
+        ShortUrl entity = new ShortUrl(
+                UUID.randomUUID(),
+                "abc123",
+                "https://example.com",
+                UrlStatus.ACTIVE,
+                SafetyStatus.SAFE);
+        when(shortUrlRepository.findByShortCode("abc123")).thenReturn(Optional.of(entity));
+        when(shortUrlRepository.save(org.mockito.ArgumentMatchers.any(ShortUrl.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ShortUrlResult result = urlService.updateShortUrl(
+                "abc123",
+                new UpdateShortUrlRequest(null, UrlStatus.DISABLED));
+
+        assertThat(result.url().status()).isEqualTo(UrlStatus.DISABLED);
+    }
+
+    @Test
+    void deleteShortUrl_removesEntity() {
+        ShortUrl entity = new ShortUrl(
+                UUID.randomUUID(),
+                "abc123",
+                "https://example.com",
+                UrlStatus.ACTIVE,
+                SafetyStatus.SAFE);
+        when(shortUrlRepository.findByShortCode("abc123")).thenReturn(Optional.of(entity));
+
+        urlService.deleteShortUrl("abc123");
+
+        org.mockito.Mockito.verify(shortUrlRepository).delete(entity);
     }
 
     @Test

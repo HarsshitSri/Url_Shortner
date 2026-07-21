@@ -147,7 +147,8 @@ body {
 .tour-panel[hidden],
 .error-box[hidden],
 .result-box[hidden],
-.notice[hidden] {
+.notice[hidden],
+.warnings[hidden] {
   display: none;
 }
 
@@ -347,6 +348,129 @@ body {
   font-size: 0.92rem;
 }
 
+.links-panel {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem 1.5rem 1.75rem;
+  margin-bottom: 1.25rem;
+  animation: rise 0.85s ease both;
+}
+
+.links-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.links-header h2 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+}
+
+.links-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.links-filters input,
+.links-filters select {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.65rem 0.9rem;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.links-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.links-table th,
+.links-table td {
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.links-table th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.links-table .empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 1.5rem;
+}
+
+.links-table .code a {
+  color: var(--accent-deep);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.links-table .dest {
+  max-width: 16rem;
+  word-break: break-all;
+  color: var(--muted);
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.btn-tiny {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.pager .btn.is-inactive {
+  opacity: 0.45;
+}
+
+.pager .btn {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.page-info {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .footer {
   width: min(920px, calc(100% - 2rem));
   margin: 0 auto 2rem;
@@ -365,5 +489,9 @@ body {
 
   .input-row .btn-primary {
     width: 100%;
+  }
+
+  .links-header {
+    flex-direction: column;
   }
 }
